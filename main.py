@@ -4,7 +4,6 @@ import torch.optim as optim
 import numpy as np
 import torchvision
 from torchvision import datasets, models, transforms
-import matplotlib.pyplot as plt
 import time
 import os
 import copy
@@ -12,7 +11,7 @@ from dataset import *
 
 # Top level data directory. Here we assume the format of the directory conforms
 #   to the ImageFolder structure
-data_dir = "/home/jxk/projects/StackGAN-v2/data/birds"
+data_dir = "/home/eree/Documents/StackGAN-v2/data/birds"
 # data_dir = "./data/hymenoptera_data"
 # Models to choose from [resnet, alexnet, vgg, squeezenet, densenet, inception]
 model_name = "inception"
@@ -24,7 +23,7 @@ num_classes = 50
 batch_size = 64
 
 # Number of epochs to train for
-num_epochs = 100
+num_epochs = 30
 
 # Flag for feature extracting. When False, we finetune the whole model,
 #   when True we only update the reshaped layer params
@@ -220,13 +219,13 @@ data_transforms = {
         transforms.RandomResizedCrop(input_size),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
-        transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ]),
     'val': transforms.Compose([
         transforms.Resize(input_size),
         transforms.CenterCrop(input_size),
         transforms.ToTensor(),
-        transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ]),
 }
 
@@ -276,7 +275,11 @@ model_ft, hist = train_model(model_ft, dataloaders_dict, criterion, optimizer_ft
 
 
 # save model
-torch.save(model_ft.state_dict(), './inception_birds.pth')
+path = 'inception_' + str(num_epochs)
+if feature_extract:
+    path = path + '_fronzen'
+path = './'+path + '.pth'
+torch.save(model_ft.state_dict(), path)
 
 # Plot the training curves of validation accuracy vs. number
 #  of training epochs for the transfer learning method and

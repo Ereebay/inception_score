@@ -47,8 +47,60 @@ def get_imgs(img_path, imsize, bbox=None,
     return img
 
 
+class ImageFolder(data.Dataset):
+    def __init__(self, root, custom_classes=None, base_size=64, transform=None, target_transform=None):
+        root = os.path.join(root, 'single_samples')
+        classes, class_to_idx = self.find_classes(root, custom_classes)
+        imgs = self.make_dataset(classes, class_to_idx)
+
+        self.root = root
+        self.imgs = imgs
+        self.classes = classes
+        self.num_classes = len(classes)
+        self.class_to_idx = class_to_idx
+
+        self.transform = transform
+        self.target_transform = target_transform
+        self.norm = transforms.Compose([transforms.ToTensor(),
+                                        transforms.Normalize((0.5,0.5,0.5),(0.5,0.5,0.5))])
+        self.imsize = 64
+
+        print('num_classes', self.num_classes)
+
+    def find_classes(self, dir, custom_classes):
+        classes = []
+        for d in os.listdir(dir):
+            if os.path.isdir:
+                if custom_classes is None or d in custom_classes:
+                    classes.append((os.path.join(dir, d)))
+        print('valid classes:', len(classes), classes)
+
+        classes.sort()
+        class_to_idx = {classes[i]: i for i in range(len(classes))}
+        return classes, class_to_idx
+
+    def make_dataset(self, classes, class_to_idx):
+        images = []
+        for d in classes:
+            for root, _, file_names in sorted(os.walk(d)):
+                for name in file_names:
+                    if is_image_file(name):
+                        path = os.path.join(root, name)
+                        item = (path, class_to_idx[d])
+                        images.append(item)
+        print('The number of images:', len(images))
+        return images
+
+    def __getitem__(self, index):
+        path, target = self.imgs[index]
+        imgs_list = get_imgs(path, self.imsize, transform=self.norm)
+        return imgs_list
+
+    def __len__(self):
+        return len(self.imgs)
+
 class TextDataset(data.Dataset):
-    def __init__(self, data_dir, split='train', filenames=None, embedding_type='cnn-rnn', base_size=64, transform=None, target_transform=None):
+    def __init__(self, data_dir, split='train', filenames=None, base_size=64, transform=None, target_transform=None):
         self.transform = transform
         self.target_transform = target_transform
 
